@@ -34,6 +34,10 @@ type FanDirectionDps = typeof FAN_DIRECTION_FORWARD | typeof FAN_DIRECTION_REVER
 const isFanDirectionDps = (value: unknown): value is FanDirectionDps =>
   value === FAN_DIRECTION_FORWARD || value === FAN_DIRECTION_REVERSE;
 
+const IPV4_REGEX = /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$/;
+
+const isValidIpv4 = (ip: string): boolean => IPV4_REGEX.test(ip);
+
 const percentToStep = (percent: number): number =>
   Math.min(FAN_SPEED_MAX, Math.max(FAN_SPEED_MIN, Math.ceil(percent / (100 / FAN_SPEED_MAX))));
 
@@ -193,12 +197,27 @@ export class FanAccessory {
       }
     }
 
+    const device = accessory.context.device;
+    if (device.ip && !isValidIpv4(device.ip)) {
+      this.log.warn(
+        `${accessory.displayName}:`,
+        `Configured ip "${device.ip}" does not look like a valid IPv4 address; connection may fail`,
+      );
+    }
+
     this.tuyaDevice = new TuyAPI({
-      id: accessory.context.device.id,
-      key: accessory.context.device.key,
-      version: accessory.context.device.version ?? '3.4',
+      id: device.id,
+      key: device.key,
+      version: device.version ?? '3.4',
       issueRefreshOnConnect: true,
+      ...(device.ip ? { ip: device.ip } : {}),
     });
+    if (device.ip) {
+      this.log.debug(
+        `${accessory.displayName}:`,
+        `Tuya protocol ${device.version ?? '3.4'}, static IP ${device.ip}`,
+      );
+    }
     this.tuyaDevice.on('disconnected', () => {
       this.log.info(`${this.accessory.displayName}:`,'Disconnected');
       this.isConnected = false;
@@ -243,10 +262,16 @@ export class FanAccessory {
       return;
     }
     this.isConnecting = true;
-    this.log.info(`${this.accessory.displayName}:`, 'Connecting...');
+    const device = this.accessory.context.device;
     try {
-      await this.tuyaDevice.find();
-      await this.tuyaDevice.connect();
+      if (device.ip) {
+        this.log.info(`${this.accessory.displayName}:`, `Connecting via static IP ${device.ip}...`);
+        await this.tuyaDevice.connect();
+      } else {
+        this.log.info(`${this.accessory.displayName}:`, 'Connecting...');
+        await this.tuyaDevice.find();
+        await this.tuyaDevice.connect();
+      }
     } catch (err) {
       this.log.warn(`${this.accessory.displayName}:`, `connect failed -> ${err}`);
       this.scheduleReconnect();

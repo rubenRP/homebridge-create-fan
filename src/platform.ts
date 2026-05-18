@@ -11,6 +11,8 @@ export interface FanConfiguration {
   toggles?: boolean;
   speedButtons?: boolean;
   version?: TuyaProtocolVersion;
+  /** Static LAN IPv4 when UDP discovery (find) fails, e.g. "192.168.1.128" */
+  ip?: string;
 }
 
 export interface PersistedFanState {
@@ -65,6 +67,7 @@ export class HomebridgeCreateCeilingFan implements DynamicPlatformPlugin {
       const existingFan = this.accessories.get(uuid);
       if (existingFan) {
         this.log.info('Platform:',`Restoring existing accessory from cache -> ${existingFan.displayName}`);
+        existingFan.context.device = { ...existingFan.context.device, ...fan };
         new FanAccessory(this, existingFan);
       } else {
         this.log.info('Platform:',`Adding new accessory -> ${fan.name}`);
