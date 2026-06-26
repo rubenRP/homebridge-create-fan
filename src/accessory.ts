@@ -377,7 +377,7 @@ export class FanAccessory {
 
     const directionDps = dps[String(DPS_FAN_DIRECTION)];
     if (isFanDirectionDps(directionDps) && !this.shouldIgnoreEcho(DPS_FAN_DIRECTION, directionDps)) {
-      const nextDirection: 0 | 1 = directionDps === FAN_DIRECTION_FORWARD ? 0 : 1;
+      const nextDirection: 0 | 1 = directionDps === FAN_DIRECTION_FORWARD ? 1 : 0;
       if (nextDirection !== this.fanState.RotationDirection) {
         this.fanState.RotationDirection = nextDirection;
         this.fanService.updateCharacteristic(this.Characteristic.RotationDirection, nextDirection);
@@ -528,7 +528,7 @@ export class FanAccessory {
     }
     this.fanState.RotationDirection = next;
     this.persistState();
-    const dpsValue: FanDirectionDps = next === 0 ? FAN_DIRECTION_FORWARD : FAN_DIRECTION_REVERSE;
+    const dpsValue: FanDirectionDps = next === 0 ? FAN_DIRECTION_REVERSE : FAN_DIRECTION_FORWARD;
     this.scheduleCommand(DPS_FAN_DIRECTION, dpsValue);
     this.log.debug(`${this.accessory.displayName}:`, `setRotationDirection() => ${dpsValue}`);
   }
