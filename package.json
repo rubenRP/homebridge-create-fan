@@ -2,7 +2,7 @@
   "name": "homebridge-create-ceiling-fan-lan",
   "displayName": "Homebridge Create Ceiling Fan (LAN)",
   "type": "module",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "private": false,
   "description": "Control CREATE ceiling fans via Homebridge with optional static LAN IP (skips UDP discovery)",
   "author": "Ruben Rodriguez",
